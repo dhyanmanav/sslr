@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TamperGuard | Log Tampering Forensics</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="authView" class="auth-view">
+    <div class="auth-card">
+      <div class="brand auth-brand"><span class="logo">&#9919;</span><div><b>TamperGuard</b><small>Log Tampering Forensics</small></div></div>
+      <span class="module-kicker">SECURE FORENSIC WORKSPACE</span>
+      <h1 id="authTitle">Sign in</h1>
+      <p id="authHint" class="muted">Sign in to open your isolated evidence workspace.</p>
+      <form id="authForm">
+        <label>Email<input id="authEmail" type="email" autocomplete="email" required></label>
+        <label>Password<input id="authPassword" type="password" autocomplete="current-password" minlength="6" required></label>
+        <button class="btn" id="authSubmit" type="submit">Sign in</button>
+      </form>
+      <div id="authMessage" class="auth-message" hidden></div>
+      <button id="authToggle" class="link-btn" type="button">Need an account? Sign up</button>
+    </div>
+  </section>
+
+  <div id="appShell" hidden>
+    <header class="app-header">
+      <div class="brand"><span class="logo">&#9919;</span><div><b>TamperGuard</b><small>Log Tampering Forensics</small></div></div>
+      <div class="header-actions">
+        <span id="connectionPill" class="pill">Checking connection…</span>
+        <button class="btn ghost" id="emailModuleBtn" type="button">Email security</button>
+        <span class="account-label" id="accountEmail"></span>
+        <button class="btn ghost" id="signOutBtn" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <div id="errorBar" class="errbar" hidden></div>
+      <section class="hero">
+        <div><span class="module-kicker">G39 · MAJOR PROJECT</span><h1>Log Tampering Detector</h1><p>Analyze system logs, monitor live Suricata records, detect integrity violations, and generate a court-ready forensic report.</p></div>
+        <div class="hero-actions"><button class="btn ghost" id="verifyChainBtn" type="button">Verify evidence chain</button><button class="btn" id="reportBtn" type="button">Generate PDF report</button></div>
+      </section>
+
+      <section id="emailModule" class="email-module" hidden>
+        <div class="module-toolbar"><div><span class="module-kicker">SEPARATE MODULE · REAL-TIME SMTP METADATA</span><h1>Email Security Monitor</h1><p>Tracks email-related Suricata records without storing message bodies. Suspicious metadata is scored and added to the alert register.</p></div><button class="btn ghost" id="closeEmailModule" type="button">Back to log tampering</button></div>
+        <div class="email-kpis"><div class="card"><small>Messages observed</small><b id="emailCount">0</b></div><div class="card"><small>Threat findings</small><b id="emailThreatCount" class="bad">0</b></div><div class="card"><small>Last received</small><b id="emailLastSeen">-</b></div></div>
+        <div class="card email-panel"><div class="card-head"><div><h2>Live email records</h2><p class="card-subtitle">Metadata only: sender, recipients, SMTP host, protocol, and risk reason.</p></div><span id="emailLiveBadge" class="monitor-badge">Waiting</span></div><div class="table-scroll"><table class="email-table"><thead><tr><th>Time</th><th>Sender</th><th>Recipients</th><th>SMTP host</th><th>Source → destination</th><th>Risk</th><th>Summary</th></tr></thead><tbody id="emailRows"><tr><td colspan="7" class="muted">Waiting for SMTP records from Suricata…</td></tr></tbody></table></div></div>
+        <div class="card email-panel"><div class="card-head"><div><h2>Email threat findings</h2><p class="card-subtitle">Suspicious SMTP metadata detected by TamperGuard.</p></div></div><div id="emailAlerts" class="email-alerts"><p class="muted">No email threats detected.</p></div></div>
+      </section>
+
+      <section id="statusBanner" class="status-banner"><div><b id="statusTitle">Connecting to Suricata…</b><span id="statusDetail">Checking the configured eve.json source.</span></div><span id="statusSource"></span></section>
+
+      <section class="workspace-grid">
+        <div class="card input-card">
+          <div class="card-head"><div><h2>Manual log analysis</h2><p class="card-subtitle">Use a controlled scenario or paste your own multiline log.</p></div><span class="card-icon">⌁</span></div>
+          <div class="scenario-row">
+            <button class="btn ghost lt-scenario" data-scenario="clean" type="button">✓ Clean</button>
+            <button class="btn ghost lt-scenario" data-scenario="deletion" type="button">Deleted</button>
+            <button class="btn ghost lt-scenario" data-scenario="modified" type="button">Modified</button>
+            <button class="btn ghost lt-scenario" data-scenario="injected" type="button">Injected</button>
+            <button class="btn ghost lt-scenario" data-scenario="timestamp" type="button">Timestamp</button>
+          </div>
+          <textarea id="ltLog" class="lt-textarea" rows="12" spellcheck="false" placeholder="Paste log entries here…"></textarea>
+          <div class="lt-actions"><select id="ltMethod"><option>LSTM Anomaly Detection</option><option>Hash Chain Verification</option><option>Combined Analysis</option></select><button class="btn" id="ltVerify" type="button">Verify log</button></div>
+        </div>
+
+        <div class="card result-card">
+          <div class="card-head"><div><h2>Integrity report</h2><p class="card-subtitle">Clear findings from the selected analysis.</p></div><span class="card-icon">✓</span></div>
+          <div id="ltResult" class="lt-empty">Choose a scenario or paste log entries, then select <b>Verify log</b>.</div>
+          <div id="ltIssues" class="lt-issues"></div>
+        </div>
+      </section>
+
+      <section class="card monitor-card">
+        <div class="card-head"><div><h2>Live Suricata packet monitor</h2><p class="card-subtitle">Only records appended after monitoring starts are processed. History is bounded and summarized instead of dumping thousands of rows.</p></div><span id="ltMonitorStatus" class="monitor-badge">Monitor stopped</span></div>
+        <div class="lt-monitor-form"><input id="ltSuricataPath" placeholder="C:\Program Files\Suricata\log\eve.json"><select id="ltSuricataFormat"><option value="auto">Auto detect</option><option value="eve.json">eve.json</option><option value="fast.log">fast.log</option></select><button class="btn" id="ltMonitorStart" type="button">Start monitor</button><button class="btn ghost" id="ltMonitorStop" type="button" disabled>Stop</button></div>
+        <div class="monitor-meta"><span id="ltMonitorEntries">0 records</span><span>New records only · bounded live history</span></div>
+        <div id="ltMonitorResult" class="lt-empty">Live packet summaries will appear here.</div>
+        <div id="ltPacketSummary" class="packet-summary"></div>
+        <div id="ltMonitorEvents" class="lt-log lt-events"></div>
+      </section>
+
+      <section class="lower-grid">
+        <div class="card"><div class="card-head"><div><h2>Forensics activity</h2><p class="card-subtitle">Transparent analysis and monitoring events.</p></div></div><div id="ltLog2" class="lt-log activity-log"><div>Log Integrity Engine — Ready.</div></div></div>
+        <div class="card team-card"><div class="card-head"><div><h2>Project team</h2><p class="card-subtitle">Department of Computer Science and Engineering</p></div></div><b>G39</b><p>1GA23CS083 · Leesa M · 6B</p><p>1GA23CS134 · Rakshitha N R · 6C</p><p>1GA23CS143 · Samiksha S Kumar · 6C</p><p>1GA23CS173 · Sunidhi S P · 6C</p><hr><b>Guide</b><p>Dr. R. Kanagavalli</p><p>Professor</p></div>
+      </section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>

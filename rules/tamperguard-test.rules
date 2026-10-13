@@ -1,0 +1,2 @@
+# TamperGuard demonstration rule. Keep this rule disabled outside presentations.
+alert tcp any any -> $HOME_NET 9999 (msg:"TamperGuard DEMO - synthetic attack detected"; flow:to_server; flags:S; sid:999999; rev:1;)

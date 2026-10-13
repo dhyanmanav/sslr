@@ -1,0 +1,1 @@
+{"app_proto":"smtp","event_type":"smtp","timestamp":"2026-10-13T20:38:06.872Z","proto":"TCP","src_ip":"192.168.1.50","smtp":{"helo":"192.168.1.50","rcpt_to":["test@example.com"],"mail_from":"urgent-prize@mailinator.com","filename":"invoice.exe","subject":"URGENT verify-account password-reset"},"dest_ip":"192.168.1.10"}
