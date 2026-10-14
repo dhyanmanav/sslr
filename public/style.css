@@ -961,6 +961,33 @@ textarea:focus {
     color: var(--tx-secondary);
 }
 
+.redirect-module {
+    margin-top: 4px;
+}
+
+.redirect-note {
+    border-left: 4px solid var(--acc);
+    color: var(--tx-secondary);
+    margin-bottom: 20px;
+}
+
+.redirect-table {
+    min-width: 980px;
+}
+
+.redirect-url {
+    display: block;
+    color: var(--mut);
+    margin-top: 3px;
+    overflow-wrap: anywhere;
+}
+
+.redirect-neutral {
+    border-left-color: var(--acc);
+    border-color: rgba(79, 140, 255, 0.25);
+    background: rgba(79, 140, 255, 0.08);
+}
+
 .muted {
     color: var(--mut);
 }
@@ -1012,6 +1039,7 @@ textarea:focus {
     .email-kpis {
         grid-template-columns: 1fr;
     }
+
 }
 
 @media (max-width: 600px) {

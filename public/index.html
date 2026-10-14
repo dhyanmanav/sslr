@@ -29,6 +29,7 @@
       <div class="header-actions">
         <span id="connectionPill" class="pill">Checking connection…</span>
         <button class="btn ghost" id="emailModuleBtn" type="button">Email security</button>
+        <button class="btn ghost" id="redirectModuleBtn" type="button">Link monitor</button>
         <span class="account-label" id="accountEmail"></span>
         <button class="btn ghost" id="signOutBtn" type="button">Sign out</button>
       </div>
@@ -46,6 +47,28 @@
         <div class="email-kpis"><div class="card"><small>Messages observed</small><b id="emailCount">0</b></div><div class="card"><small>Threat findings</small><b id="emailThreatCount" class="bad">0</b></div><div class="card"><small>Last received</small><b id="emailLastSeen">-</b></div></div>
         <div class="card email-panel"><div class="card-head"><div><h2>Live email records</h2><p class="card-subtitle">Metadata only: sender, recipients, SMTP host, protocol, and risk reason.</p></div><span id="emailLiveBadge" class="monitor-badge">Waiting</span></div><div class="table-scroll"><table class="email-table"><thead><tr><th>Time</th><th>Sender</th><th>Recipients</th><th>SMTP host</th><th>Source → destination</th><th>Risk</th><th>Summary</th></tr></thead><tbody id="emailRows"><tr><td colspan="7" class="muted">Waiting for SMTP records from Suricata…</td></tr></tbody></table></div></div>
         <div class="card email-panel"><div class="card-head"><div><h2>Email threat findings</h2><p class="card-subtitle">Suspicious SMTP metadata detected by TamperGuard.</p></div></div><div id="emailAlerts" class="email-alerts"><p class="muted">No email threats detected.</p></div></div>
+      </section>
+
+      <section id="redirectModule" class="redirect-module" hidden>
+        <div class="module-toolbar">
+          <div>
+            <span class="module-kicker">SEPARATE MODULE · REAL-TIME HTTP NAVIGATION</span>
+            <h1>Link & Redirect Monitor</h1>
+            <p>Explains observed HTTP redirects, login-related navigation, destination hosts, and the security meaning of each step from Suricata metadata.</p>
+          </div>
+          <button class="btn ghost" id="closeRedirectModule" type="button">Back to log tampering</button>
+        </div>
+        <div class="card redirect-note"><b>What this can see:</b> only HTTP metadata that Suricata logs. HTTPS normally reveals the hostname and TLS connection, but not the encrypted redirect target unless your authorized test setup logs it separately.</div>
+        <div class="email-kpis">
+          <div class="card"><small>Redirects observed</small><b id="redirectCount">0</b></div>
+          <div class="card"><small>Login-related steps</small><b id="redirectLoginCount">0</b></div>
+          <div class="card"><small>Last navigation</small><b id="redirectLastSeen">-</b></div>
+        </div>
+        <div class="card email-panel">
+          <div class="card-head"><div><h2>Navigation timeline</h2><p class="card-subtitle">Newest HTTP 3xx and login-related records appear first.</p></div><span id="redirectLiveBadge" class="monitor-badge">Waiting</span></div>
+          <div class="table-scroll"><table class="email-table redirect-table"><thead><tr><th>Time</th><th>Site</th><th>Status</th><th>Location / destination</th><th>What happened</th></tr></thead><tbody id="redirectRows"><tr><td colspan="5" class="muted">Waiting for web records from Suricata…</td></tr></tbody></table></div>
+        </div>
+        <div class="card email-panel"><div class="card-head"><div><h2>Explainable findings</h2><p class="card-subtitle">Rules identify redirects, cross-site hops, login flows, and missing redirect metadata.</p></div></div><div id="redirectFindings" class="email-alerts"><p class="muted">No navigation findings yet.</p></div></div>
       </section>
 
       <section id="statusBanner" class="status-banner"><div><b id="statusTitle">Connecting to Suricata…</b><span id="statusDetail">Checking the configured eve.json source.</span></div><span id="statusSource"></span></section>

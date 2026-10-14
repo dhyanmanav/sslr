@@ -3,7 +3,21 @@
   "version": "1.0.0",
   "description": "Suricata eve.json log tampering detection (hash-chain) with Supabase + dashboard",
   "main": "server.js",
-  "scripts": { "start": "node server.js", "sample": "node scripts/gen-sample.js 300", "live": "node scripts/gen-sample.js --live", "tamper": "node scripts/tamper.js", "attack:live": "node scripts/attack-live.js", "attack:synthetic": "powershell -ExecutionPolicy Bypass -File scripts/attack-live.ps1", "simulate:attack": "powershell -ExecutionPolicy Bypass -File scripts/simulate-attack.ps1" },
-  "dependencies": { "cors": "^2.8.5", "dotenv": "^16.4.5", "express": "^4.19.2" },
-  "engines": { "node": ">=18" }
+  "scripts": {
+    "start": "node server.js",
+    "sample": "node scripts/gen-sample.js 300",
+    "live": "node scripts/gen-sample.js --live",
+    "tamper": "node scripts/tamper.js",
+    "attack:live": "node scripts/attack-live.js",
+    "attack:synthetic": "powershell -ExecutionPolicy Bypass -File scripts/attack-live.ps1",
+    "simulate:attack": "powershell -ExecutionPolicy Bypass -File scripts/simulate-attack.ps1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }

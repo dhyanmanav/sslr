@@ -147,6 +147,23 @@ Click **Email security** in the header to open the separate real-time email modu
 
 The module raises explainable `EMAIL_THREAT` findings for suspicious metadata such as social-engineering phrases, disposable sender domains, raw-IP SMTP HELO values, and potentially dangerous attachment names when Suricata exposes those fields. Suricata must have `smtp` enabled in the EVE output, and the machine must be able to observe the SMTP traffic. Encrypted provider traffic may expose only connection metadata rather than message content.
 
+## Link & Redirect Monitor
+
+Click **Link monitor** to open the separate navigation workspace. It polls the classified Suricata web events and explains HTTP 3xx responses, login/account paths, cross-site destinations, and cases where the redirect target is not exposed in the available metadata. It does not inspect encrypted page contents or claim that a redirect is malicious merely because it crosses domains; it reports the evidence that is actually available.
+
+## ESP32 synthetic tamper demonstration
+
+The ESP32 sketch at `examples/esp32_synthetic_attack/esp32_synthetic_attack.ino` produces the same fixed synthetic event as the PowerShell demonstration: `event_type=alert`, `cyberforensics_test_tampered=true`, severity `1`, and signature `TEST ONLY - Synthetic tampering test`. It sends an authenticated request to TamperGuard; the server appends the event to the configured `EVE_PATH`, ingests it, and the dashboard shows the same `SYNTHETIC_TAMPER_TEST` alert.
+
+Before uploading the sketch:
+
+1. Set `ESP32_ATTACK_TOKEN` in `.env` to a long random value and restart TamperGuard.
+2. Put the server computer's LAN IP in `TAMPERGUARD_URL`, for example `http://192.168.1.10:3000/api/demo/esp32-attack`.
+3. Set the Wi-Fi credentials and the same token in the sketch.
+4. Upload and reset the ESP32. After Wi-Fi connects, it sends exactly one event. The server enforces the token and a three-second trigger limit.
+
+This is intentionally a bounded demo trigger, not arbitrary file-write access from the microcontroller. Keep it on a trusted LAN and use it only with an evidence file you own.
+
 ## Detection logic
 `chain_n = SHA256(chain_{n-1} + SHA256(line_n))` over *every* line. Verification re-walks the file and compares with stored baselines:
 modified line → line hash mismatch · hidden edit in unstored lines → chain break · removed/inserted lines → stored hashes found at shifted positions · truncation → fewer lines / smaller file.

@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express'), cors = require('cors'), fs = require('fs'), crypto = require('crypto'),
   readline = require('readline'), path = require('path');
-const { SUPABASE_URL, SUPABASE_ANON_KEY, EVE_PATH, SOURCE_ID = 'suricata-main', PORT = 3000 } = process.env;
+const { SUPABASE_URL, SUPABASE_ANON_KEY, EVE_PATH, SOURCE_ID = 'suricata-main', PORT = 3000, ESP32_ATTACK_TOKEN } = process.env;
 const POLL_MS = +process.env.POLL_MS || 2000, VERIFY_MS = (+process.env.AUTO_VERIFY_SECONDS || 30) * 1000;
 const ACTIVE_WINDOW_MS = +process.env.ACTIVE_WINDOW_SECONDS * 1000 || 15000;
 const MAX_STORED_EVENTS = Math.max(100, +process.env.MAX_STORED_EVENTS || 2000);
@@ -452,6 +452,85 @@ app.get('/api/email/events', w(async (req, res) => {
   });
   res.json({ rows, alerts });
 }));
+
+/* ---------- standalone HTTP redirect monitor ---------- */
+function redirectDetails(row) {
+  const http = row.raw?.http && typeof row.raw.http === 'object' ? row.raw.http : {};
+  const status = Number(http.status || 0);
+  const url = String(http.url || '');
+  const host = String(http.hostname || row.host || '');
+  const location = http.location || http.redirect || http.http_location || null;
+  const loginRelated = /login|signin|sign-in|oauth|authorize|auth|account/i.test(`${host}${url}`);
+  const redirect = status >= 300 && status < 400;
+  const crossSite = location && (() => {
+    try { return new URL(location, `https://${host}`).hostname !== host; } catch (_) { return false; }
+  })();
+  const findings = [];
+  if (redirect) findings.push(`HTTP ${status} redirect observed`);
+  if (loginRelated) findings.push('Login or account navigation');
+  if (crossSite) findings.push('Destination host differs from the requested site');
+  if (redirect && !location) findings.push('Redirect target was not present in Suricata metadata');
+  return {
+    line_no: row.line_no,
+    ts: row.ts,
+    host,
+    url,
+    status,
+    location: location ? String(location) : null,
+    src_ip: row.src_ip,
+    dest_ip: row.dest_ip,
+    summary: row.summary,
+    loginRelated,
+    redirect,
+    crossSite,
+    explanation: findings.length ? findings.join('; ') : 'Normal web request observed'
+  };
+}
+app.get('/api/redirects', w(async (req, res) => {
+  const limit = Math.min(200, Math.max(1, Number(req.query.limit || 100)));
+  const result = await sb(`log_events?source_id=eq.${sourceId()}&category=eq.web&select=line_no,ts,host,src_ip,dest_ip,summary,raw&order=line_no.desc&limit=${limit}`);
+  const rows = (result.data || []).map(redirectDetails).filter(row => row.redirect || row.loginRelated);
+  res.json({
+    rows,
+    redirects: rows.filter(row => row.redirect).length,
+    loginRelated: rows.filter(row => row.loginRelated).length
+  });
+}));
+
+/* ---------- bounded ESP32 synthetic tamper demonstration ---------- */
+let lastEsp32Attack = 0;
+app.post('/api/demo/esp32-attack', async (req, res) => {
+  if (!ESP32_ATTACK_TOKEN || req.get('x-esp32-token') !== ESP32_ATTACK_TOKEN) {
+    return res.status(401).json({ error: 'ESP32 demo token is not configured or is invalid.' });
+  }
+  if (Date.now() - lastEsp32Attack < 3000) return res.status(429).json({ error: 'Wait three seconds between demo triggers.' });
+  if (!EVE_PATH) return res.status(500).json({ error: 'EVE_PATH is not configured.' });
+  const event = {
+    timestamp: new Date().toISOString(),
+    event_type: 'alert',
+    src_ip: '192.168.1.50',
+    dest_ip: '192.168.1.10',
+    proto: 'TCP',
+    cyberforensics_test_tampered: true,
+    alert: {
+      action: 'allowed',
+      gid: 1,
+      signature_id: 999999,
+      rev: 1,
+      signature: 'TEST ONLY - Synthetic tampering test',
+      category: 'Test Log Integrity Alert',
+      severity: 1
+    }
+  };
+  try {
+    await fs.promises.appendFile(EVE_PATH, `${JSON.stringify(event)}${require('os').EOL}`, { encoding: 'utf8' });
+    lastEsp32Attack = Date.now();
+    await ingestOnce();
+    res.json({ accepted: true, message: 'ESP32 synthetic tamper event appended and queued for ingestion.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.get('/api/report', w(async (req, res) => {
   const [vs, al, cu, ev, src] = await Promise.all([

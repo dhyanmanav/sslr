@@ -11,6 +11,7 @@ let monitorTimer = null;
 let monitorSequence = 0;
 let monitorHistory = [];
 let emailTimer = null;
+let redirectTimer = null;
 let audioContext = null;
 let lastTamperSignal = false;
 
@@ -378,6 +379,11 @@ function showEmailModule(show) {
   document.querySelectorAll('.workspace > :not(#emailModule):not(#errorBar)').forEach(node => {
     node.hidden = show;
   });
+  if (!show) {
+    document.querySelectorAll('.workspace > :not(#emailModule):not(#errorBar)').forEach(node => {
+      node.hidden = false;
+    });
+  }
   if (show) {
     loadEmailModule();
     if (!emailTimer) emailTimer = setInterval(loadEmailModule, 3000);
@@ -425,6 +431,52 @@ async function loadEmailModule() {
     $('#emailLiveBadge').textContent = 'Backend unavailable';
     $('#emailLiveBadge').className = 'monitor-badge error';
   }
+
+}
+
+// --- Link and Redirect Monitor Module ---
+function showRedirectModule(show) {
+  $('#redirectModule').hidden = !show;
+  document.querySelectorAll('.workspace > :not(#redirectModule):not(#errorBar)').forEach(node => {
+    node.hidden = show;
+  });
+  if (!show) {
+    document.querySelectorAll('.workspace > :not(#redirectModule):not(#errorBar)').forEach(node => {
+      node.hidden = false;
+    });
+  }
+  if (show) {
+    loadRedirects();
+    if (!redirectTimer) redirectTimer = setInterval(loadRedirects, 2500);
+  } else if (redirectTimer) {
+    clearInterval(redirectTimer);
+    redirectTimer = null;
+  }
+}
+
+async function loadRedirects() {
+  try {
+    const data = await api('redirects?limit=100');
+    $('#redirectCount').textContent = data.redirects || 0;
+    $('#redirectLoginCount').textContent = data.loginRelated || 0;
+    $('#redirectLastSeen').textContent = data.rows[0]?.ts ? fmt(data.rows[0].ts) : '-';
+    $('#redirectLiveBadge').textContent = data.rows.length ? 'Receiving web metadata' : 'Waiting';
+    $('#redirectLiveBadge').className = `monitor-badge ${data.rows.length ? 'connected' : ''}`;
+    $('#redirectRows').innerHTML = data.rows.length ? data.rows.map(row => `
+      <tr>
+        <td>${fmt(row.ts)}</td>
+        <td class="mono">${esc(row.host || '-')}<small class="redirect-url">${esc(row.url || '')}</small></td>
+        <td><span class="${row.redirect ? 'email-risk' : 'email-safe'}">${row.status || 'request'}</span></td>
+        <td class="mono">${esc(row.location || row.dest_ip || 'Target not exposed')}</td>
+        <td>${esc(row.explanation)}</td>
+      </tr>`).join('') : '<tr><td colspan="5" class="muted">No redirect or login-related web records observed yet.</td></tr>';
+    $('#redirectFindings').innerHTML = data.rows.length
+      ? data.rows.slice(0, 30).map(row => `<div class="email-alert ${row.crossSite ? '' : 'redirect-neutral'}"><b>${row.redirect ? 'REDIRECT' : 'LOGIN FLOW'}</b><span>${fmt(row.ts)} · line ${row.line_no}</span><p>${esc(row.explanation)}${row.location ? ` · ${esc(row.location)}` : ''}</p></div>`).join('')
+      : '<p class="muted">No navigation findings yet.</p>';
+  } catch (error) {
+    $('#redirectLiveBadge').textContent = 'Backend unavailable';
+    $('#redirectLiveBadge').className = 'monitor-badge error';
+  }
 }
 
 // --- Global Action Listeners ---
@@ -471,6 +523,8 @@ $('#ltMonitorStart').onclick = startMonitor;
 $('#ltMonitorStop').onclick = stopMonitor;
 $('#emailModuleBtn').onclick = () => showEmailModule(true);
 $('#closeEmailModule').onclick = () => showEmailModule(false);
+$('#redirectModuleBtn').onclick = () => showRedirectModule(true);
+$('#closeRedirectModule').onclick = () => showRedirectModule(false);
 
 // --- Initialization ---
 authClient.auth.getSession().then(({ data, error }) => {
